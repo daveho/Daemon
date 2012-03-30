@@ -23,6 +23,12 @@ package org.cloudcoder.daemon.example;
 import org.cloudcoder.daemon.DaemonController;
 import org.cloudcoder.daemon.IDaemon;
 
+/**
+ * An example main class to start, shut down, and control
+ * your daemon process.
+ * 
+ * @author David Hovemeyer
+ */
 public class ExampleDaemonController extends DaemonController {
 	@Override
 	public String getDefaultInstanceName() {
