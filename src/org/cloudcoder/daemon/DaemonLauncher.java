@@ -48,6 +48,11 @@ public class DaemonLauncher {
 		// Start the process
 		String codeBase = Util.findCodeBase(this.getClass());
 		System.out.println("Codebase is " + codeBase);
+		
+		// Build a classpath in which the codebase of this class
+		// is first.
+		StringBuilder classPath = new StringBuilder();
+		
 	}
 
 	/**

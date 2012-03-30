@@ -165,7 +165,36 @@ public class Util {
 		if (!s.endsWith(resourceName)) {
 			throw new IllegalStateException("Codebase resource URL " + s + " does not match class name " + mainClass.getName());
 		}
-		return s.substring(0, s.length() - resourceName.length());
+		String raw = s.substring(0, s.length() - resourceName.length());
+		
+		String result;
+		if (raw.startsWith("file:")) {
+			// A file: URL, meaning that the codebase is a directory.
+			result = getFilenameFromFileURL(raw);
+		} else if (raw.startsWith("jar:")) {
+			// A jar URL, meaning that the codebase is a jarfile.
+			// Extract just the part that identifies the location of the jarfile.
+			result = raw.substring("jar:".length());
+			int bang = result.indexOf('!');
+			if (bang < 0) {
+				throw new IllegalStateException("jar: URL has no ! character?");
+			}
+			result = result.substring(0, bang);
+			result = getFilenameFromFileURL(result);
+		} else {
+			throw new IllegalStateException("Unknown URL type: " + raw);
+		}
+		
+		return result;
+	}
+
+	private static String getFilenameFromFileURL(String fileURL) {
+		String result;
+		result = fileURL.substring("file:".length());
+		if (result.startsWith("//")) {
+			result = result.substring("//".length());
+		}
+		return result;
 	}
 
 }
