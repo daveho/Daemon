@@ -58,7 +58,7 @@ public class DaemonLauncher {
 		
 		// Start the process
 		String codeBase = Util.findCodeBase(this.getClass());
-		System.out.println("Codebase is " + codeBase);
+		//System.out.println("Codebase is " + codeBase);
 		
 		// Build a classpath in which the codebase of this class is first.
 		StringBuilder classPathBuilder = new StringBuilder();
@@ -73,31 +73,25 @@ public class DaemonLauncher {
 		}
 		
 		/*
-		 * /bin/sh -c '( ( echo $$ > instanceName.pid && mkfifo instanceName-$$.fifo &&
-		 *  exec java -classpath '[classpath]' org.cloudcoder.daemon.DaemonLauncher instanceName $$ '[daemonClassName]' >> log.txt) & )'   
+		 * /bin/sh -c '( java -classpath '[classpath]' org.cloudcoder.daemon.DaemonLauncher instanceName '[daemonClassName]' >> log.txt) & '   
 		 */
 		
 		List<String> cmd = new ArrayList<String>();
 		cmd.add("/bin/sh");
 		cmd.add("-c");
 		
-		// Generate the shell command that will create the pid file and FIFO
-		// and then launch the DaemonLauncher main method.
+		// Generate the shell command that will launch the DaemonLauncher main method
+		// as a background process
 		StringBuilder launchCmdBuilder = new StringBuilder();
-		launchCmdBuilder.append("( ( echo $$ > ");
-		launchCmdBuilder.append(Util.getPidFileName(instanceName));
-		launchCmdBuilder.append(" && mkfifo ");
-		launchCmdBuilder.append(instanceName);
-		launchCmdBuilder.append("-$$.fifo && ");
-		launchCmdBuilder.append(" exec java -classpath '");
+		launchCmdBuilder.append("( exec java -classpath '");
 		launchCmdBuilder.append(classPath);
 		launchCmdBuilder.append("' org.cloudcoder.daemon.DaemonLauncher ");
 		launchCmdBuilder.append(instanceName);
-		launchCmdBuilder.append(" $$ '");
+		launchCmdBuilder.append(" '");
 		launchCmdBuilder.append(daemonClass.getName());
-		launchCmdBuilder.append("' >> log.txt ) & )");
+		launchCmdBuilder.append("' >> log.txt ) &");
 		String launchCmd = launchCmdBuilder.toString();
-		System.out.println("launchCmd=" + launchCmd);
+		//System.out.println("launchCmd=" + launchCmd);
 		
 		cmd.add(launchCmd);
 		
@@ -117,8 +111,16 @@ public class DaemonLauncher {
 	 */
 	public static void main(String[] args) throws Exception {
 		String instanceName = args[0];
-		Integer pid = Integer.parseInt(args[1]);
-		String daemonClassName = args[2];
+		String daemonClassName = args[1];
+		
+		// Find out our pid
+		Integer pid = Util.getPid();
+		
+		// Write pid file
+		Util.writePid(instanceName, pid);
+		
+		// Create FIFO
+		Util.exec("mkfifo", Util.getFifoName(instanceName, pid));
 		
 		// Instantiate the daemon
 		Class<?> daemonClass = Class.forName(daemonClassName);

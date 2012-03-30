@@ -107,8 +107,15 @@ public abstract class DaemonController {
 			DaemonLauncher launcher = new DaemonLauncher();
 			launcher.launch(instanceName, getDaemonClass());
 		} else if (command.equals("shutdown")) {
+			// shutdown command
 			Integer pid = Util.readPid(instanceName);
 			Util.sendCommand(instanceName, pid, "shutdown");
+			Util.waitForExit(pid);
+			Util.cleanup(instanceName, pid);
+		} else {
+			// some other command
+			Integer pid = Util.readPid(instanceName);
+			Util.sendCommand(instanceName, pid, command);
 		}
 	}
 	

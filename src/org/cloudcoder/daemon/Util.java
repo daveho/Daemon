@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,6 +81,31 @@ public class Util {
 			return pid;
 		} finally {
 			IOUtil.closeQuietly(reader);
+		}
+	}
+
+	/**
+	 * Write a pid file for instance.
+	 * 
+	 * @param instanceName name of the instance
+	 * @param pid the pid
+	 * @throws DaemonException 
+	 */
+	public static void writePid(String instanceName, Integer pid) throws DaemonException {
+		try {
+			doWritePid(instanceName, pid);
+		} catch (IOException e) {
+			throw new DaemonException("Could not write pid file", e);
+		}
+	}
+
+	private static void doWritePid(String instanceName, Integer pid) throws IOException {
+		FileWriter writer = new FileWriter(getPidFileName(instanceName));
+		try {
+			writer.write(pid.toString());
+			writer.write("\n");
+		} finally {
+			IOUtil.closeQuietly(writer);
 		}
 	}
 
@@ -260,8 +284,13 @@ public class Util {
 
 	private static void doSendCommand(String instanceName, Integer pid, String command) throws IOException {
 		FileWriter writer = new FileWriter(getFifoName(instanceName, pid));
-		writer.write(command);
-		writer.write("\n");
+		try {
+			writer.write(command);
+			writer.write("\n");
+			writer.flush();
+		} finally {
+			IOUtil.closeQuietly(writer);
+		}
 	}
 
 	/**
@@ -286,5 +315,79 @@ public class Util {
 		} catch (InterruptedException e) {
 			throw new IOException("Interrupted waiting for process to copmlete", e);
 		}
+	}
+
+	/**
+	 * Get this process's pid.
+	 * 
+	 * @return this process's pid
+	 * @throws DaemonException 
+	 * @see http://blog.igorminar.com/2007/03/how-java-application-can-discover-its.html
+	 */
+	public static Integer getPid() throws DaemonException {
+		try {
+			return doGetPid();
+		} catch (IOException e) {
+			throw new DaemonException("Could not get pid", e);
+		}
+	}
+
+	private static Integer doGetPid() throws IOException {
+		BufferedReader reader = Util.readProcess("/bin/sh", "-c", "echo $PPID");
+		try {
+			String line = reader.readLine();
+			if (line == null) {
+				throw new IOException("Could not read pid from child process");
+			}
+			try {
+				return Integer.parseInt(line);
+			} catch (NumberFormatException e) {
+				throw new IOException("Invalid pid read from child process", e);
+			}
+		} finally {
+			IOUtil.closeQuietly(reader);
+		}
+	}
+
+	/**
+	 * Wait for given process to exit.
+	 * 
+	 * @param pid  the pid of the process to wait for
+	 * @throws DaemonException
+	 */
+	public static void waitForExit(Integer pid) throws DaemonException {
+		try {
+			doWaitForExit(pid);
+		} catch (IOException e) {
+			throw new DaemonException("Error waiting for process to exit", e);
+		}
+	}
+
+	private static void doWaitForExit(Integer pid) throws DaemonException,
+			IOException {
+		System.out.print("Waiting for process " + pid + " to finish...");
+		System.out.flush();
+		while (Util.isRunning(pid)) {
+			try { 
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				throw new IOException("Interrupted while waiting for process to exit", e);
+			}
+			System.out.print(".");
+			System.out.flush();
+		}
+		System.out.println("done");
+	}
+
+	/**
+	 * Clean up the pid file and FIFO used by the given instance.
+	 * The instance should have exited before this is called.
+	 * 
+	 * @param instanceName the instance name
+	 * @param pid          the pid of the exited instance
+	 */
+	public static void cleanup(String instanceName, Integer pid) {
+		Util.deleteFile(getPidFileName(instanceName));
+		Util.deleteFile(getFifoName(instanceName, pid));
 	}
 }
