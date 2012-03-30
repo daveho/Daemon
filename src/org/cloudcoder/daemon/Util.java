@@ -154,16 +154,23 @@ public class Util {
 		return envp.toArray(new String[envp.size()]);
 	}
 
-	public static String findCodeBase(Class<?> mainClass) {
-		ClassLoader cl = mainClass.getClassLoader();
-		String resourceName = mainClass.getName().replace('.', '/') + ".class";
+	/**
+	 * Return the codebase from which the given class was loaded,
+	 * in a form suitable for using as a component of a classpath.
+	 * 
+	 * @param cls  the class to determine the codebase of
+	 * @return  the class's codebase, in a form suitable for use in a classpath
+	 */
+	public static String findCodeBase(Class<?> cls) {
+		ClassLoader cl = cls.getClassLoader();
+		String resourceName = cls.getName().replace('.', '/') + ".class";
 		URL u = cl.getResource(resourceName);
 		if (u == null) {
-			throw new IllegalStateException("Can't find codebase for " + mainClass.getName());
+			throw new IllegalStateException("Can't find codebase for " + cls.getName());
 		}
 		String s = u.toExternalForm();
 		if (!s.endsWith(resourceName)) {
-			throw new IllegalStateException("Codebase resource URL " + s + " does not match class name " + mainClass.getName());
+			throw new IllegalStateException("Codebase resource URL " + s + " does not match class name " + cls.getName());
 		}
 		String raw = s.substring(0, s.length() - resourceName.length());
 		
