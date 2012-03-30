@@ -195,6 +195,12 @@ public class Util {
 		return result;
 	}
 
+	/**
+	 * Extract the filename from a file: URL.
+	 * 
+	 * @param fileURL  a file: URL
+	 * @return  the filename in the file: URL
+	 */
 	private static String getFilenameFromFileURL(String fileURL) {
 		String result;
 		result = fileURL.substring("file:".length());
