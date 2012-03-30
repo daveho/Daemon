@@ -12,7 +12,7 @@ Running the example daemon: first compile the classes (will happen automatically
 if you import the project into Eclipse).  Then cd to the root directory of
 the project.  Run the following commands:
 
-```shell
+```
 ./mkjar.sh
 java -classpath daemon.jar org.cloudcoder.daemon.example.ExampleDaemonController start
 java -classpath daemon.jar org.cloudcoder.daemon.example.ExampleDaemonController hello
