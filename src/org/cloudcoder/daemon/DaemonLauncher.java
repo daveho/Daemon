@@ -20,7 +20,20 @@
 
 package org.cloudcoder.daemon;
 
+/**
+ * Launch a daemon process in the background and create a FIFO
+ * used to send commands to the daemon.
+ * 
+ * @author David Hovemeyer
+ */
 public class DaemonLauncher {
+	/**
+	 * Launch the daemon as a background process (with a FIFO for communication).
+	 * 
+	 * @param instanceName    the instance name to use
+	 * @param daemonClass     the daemon class
+	 * @throws DaemonException
+	 */
 	public void launch(String instanceName, Class<?> daemonClass) throws DaemonException {
 		// Check to see if the instance is already running
 		Integer pid;
@@ -36,7 +49,14 @@ public class DaemonLauncher {
 		String codeBase = Util.findCodeBase(this.getClass());
 		System.out.println("Codebase is " + codeBase);
 	}
-	
+
+	/**
+	 * This is the main method invoked by the shell command used
+	 * to start the background process.  This should not be called
+	 * directly.
+	 * 
+	 * @param args arguments
+	 */
 	public static void main(String[] args) {
 		
 	}

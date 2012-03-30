@@ -23,8 +23,20 @@ package org.cloudcoder.daemon;
 import java.io.Closeable;
 import java.io.IOException;
 
+/**
+ * IO utility methods.
+ * In theory we could use commons-io, but I didn't want
+ * to have any external dependencies.
+ * 
+ * @author David Hovemeyer
+ */
 public class IOUtil {
-
+	/**
+	 * Close a {@link Closeable} object, ignoring any
+	 * {@link IOException} that might be thrown.
+	 * 
+	 * @param obj a Closeable object to close
+	 */
 	public static void closeQuietly(Closeable obj) {
 		try {
 			obj.close();
@@ -32,5 +44,4 @@ public class IOUtil {
 			// ignore
 		}
 	}
-
 }

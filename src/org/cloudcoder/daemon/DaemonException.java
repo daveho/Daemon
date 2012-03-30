@@ -20,6 +20,12 @@
 
 package org.cloudcoder.daemon;
 
+/**
+ * Exception thrown if there is an error starting, shutting down,
+ * or communicating with the daemon.
+ * 
+ * @author David Hovemeyer
+ */
 public class DaemonException extends Exception {
 	private static final long serialVersionUID = 1L;
 

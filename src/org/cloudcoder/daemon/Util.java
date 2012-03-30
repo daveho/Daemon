@@ -31,6 +31,15 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Utility methods.  Most of these are to perform system-y
+ * type things like starting processes, checking the status
+ * of a process, creating FIFOs, etc.  In theory these will
+ * work on any Unix, but in practice they are probably only
+ * tested on Linux.
+ * 
+ * @author David Hovemeyer
+ */
 public class Util {
 	/**
 	 * Read the pid file for given instance, returning the pid.

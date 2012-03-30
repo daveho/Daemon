@@ -20,7 +20,19 @@
 
 package org.cloudcoder.daemon;
 
+/**
+ * Interface to be implemented by daemon tasks.
+ * 
+ * @author David Hovemeyer
+ */
 public interface IDaemon {
+	/**
+	 * Start the daemon.
+	 */
 	public void start();
+	
+	/**
+	 * Stop the daemon.
+	 */
 	public void shutdown();
 }

@@ -20,6 +20,17 @@
 
 package org.cloudcoder.daemon;
 
+/**
+ * This class is responsible for taking commands issued from
+ * the command line and processing them to start the daemon,
+ * send administrative commands to the daemon, or shut down the
+ * daemon.  You should extend it and override the abstract methods.
+ * Your deployable main method should create an instance of
+ * your controller subclass and invoke the {@link #exec(String[])}
+ * method on it, passing the command line arguments.
+ * 
+ * @author David Hovemeyer
+ */
 public abstract class DaemonController {
 	
 	private static class Options {
@@ -66,6 +77,11 @@ public abstract class DaemonController {
 		}
 	}
 	
+	/**
+	 * Carry out the command described by the command-line arguments.
+	 * 
+	 * @param args the command-line arguments
+	 */
 	public void exec(String[] args) {
 		try {
 			doExec(args);
@@ -93,7 +109,20 @@ public abstract class DaemonController {
 		}
 	}
 	
+	/**
+	 * Get the default instance name.
+	 * This will be used if the user does not pass an explicit
+	 * instance name.
+	 * 
+	 * @return the default instance name
+	 */
 	public abstract String getDefaultInstanceName();
 	
+	/**
+	 * Get the daemon class (representing the daemon task to
+	 * be started or stopped).
+	 * 
+	 * @return the daemon class
+	 */
 	public abstract Class<? extends IDaemon> getDaemonClass();
 }
