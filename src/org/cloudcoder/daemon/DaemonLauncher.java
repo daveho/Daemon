@@ -20,6 +20,13 @@
 
 package org.cloudcoder.daemon;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Launch a daemon process in the background and create a FIFO
  * used to send commands to the daemon.
@@ -43,16 +50,61 @@ public class DaemonLauncher {
 			if (Util.isRunning(pid)) {
 				throw new DaemonException("Process " + pid + " is still running");
 			}
+			
+			// Instance is not still running, so delete pid file and FIFO
+			Util.deleteFile(Util.getPidFileName(instanceName));
+			Util.deleteFile(Util.getFifoName(instanceName, pid));
 		}
 		
 		// Start the process
 		String codeBase = Util.findCodeBase(this.getClass());
 		System.out.println("Codebase is " + codeBase);
 		
-		// Build a classpath in which the codebase of this class
-		// is first.
-		StringBuilder classPath = new StringBuilder();
+		// Build a classpath in which the codebase of this class is first.
+		StringBuilder classPathBuilder = new StringBuilder();
+		classPathBuilder.append(codeBase);
+		classPathBuilder.append(File.pathSeparator);
+		classPathBuilder.append(System.getProperty("java.class.path"));
+
+		String classPath = classPathBuilder.toString();
 		
+		if (classPath.indexOf('\'') >= 0 || classPath.indexOf('"') >= 0) {
+			throw new IllegalArgumentException("Classpath has embedded quote characters");
+		}
+		
+		/*
+		 * /bin/sh -c '( ( echo $$ > instanceName.pid && mkfifo instanceName-$$.fifo &&
+		 *  exec java -classpath '[classpath]' org.cloudcoder.daemon.DaemonLauncher instanceName $$ '[daemonClassName]' >> log.txt) & )'   
+		 */
+		
+		List<String> cmd = new ArrayList<String>();
+		cmd.add("/bin/sh");
+		cmd.add("-c");
+		
+		// Generate the shell command that will create the pid file and FIFO
+		// and then launch the DaemonLauncher main method.
+		StringBuilder launchCmdBuilder = new StringBuilder();
+		launchCmdBuilder.append("( ( echo $$ > ");
+		launchCmdBuilder.append(Util.getPidFileName(instanceName));
+		launchCmdBuilder.append(" && mkfifo ");
+		launchCmdBuilder.append(instanceName);
+		launchCmdBuilder.append("-$$.fifo && ");
+		launchCmdBuilder.append(" exec java -classpath '");
+		launchCmdBuilder.append(classPath);
+		launchCmdBuilder.append("' org.cloudcoder.daemon.DaemonLauncher ");
+		launchCmdBuilder.append(instanceName);
+		launchCmdBuilder.append(" $$ '");
+		launchCmdBuilder.append(daemonClass.getName());
+		launchCmdBuilder.append("' >> log.txt ) & )");
+		String launchCmd = launchCmdBuilder.toString();
+		System.out.println("launchCmd=" + launchCmd);
+		
+		cmd.add(launchCmd);
+		
+		int exitCode = Util.exec(cmd.toArray(new String[cmd.size()]));
+		if (exitCode != 0) {
+			throw new DaemonException("Error launching daemon: shell exited with code " + exitCode);
+		}
 	}
 
 	/**
@@ -61,8 +113,54 @@ public class DaemonLauncher {
 	 * directly.
 	 * 
 	 * @param args arguments
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		String instanceName = args[0];
+		Integer pid = Integer.parseInt(args[1]);
+		String daemonClassName = args[2];
 		
+		// Instantiate the daemon
+		Class<?> daemonClass = Class.forName(daemonClassName);
+		IDaemon daemon = (IDaemon) daemonClass.newInstance();
+		
+		// Start the daemon!
+		daemon.start();
+		
+		// Read commands (issued by the DaemonController) from the FIFO
+		String fifoName = Util.getFifoName(instanceName, pid);
+		BufferedReader reader = null;
+		boolean shutdown = false;
+		while (!shutdown) {
+			if (reader == null) {
+				// open the FIFO: will block until a process writes to it
+				reader = new BufferedReader(new FileReader(fifoName));
+			}
+			
+			// Read a command from the FIFO
+			String line = reader.readLine();
+			
+			if (line == null) {
+				// EOF on FIFO
+				IOUtil.closeQuietly(reader);
+				reader = null;
+			} else {
+				// Process the command
+				line = line.trim();
+				if (!line.equals("")) {
+					if (line.equals("shutdown")) {
+						shutdown = true;
+						IOUtil.closeQuietly(reader);
+						reader = null;
+					} else {
+						// have the daemon handle the command
+						daemon.handleCommand(line);
+					}
+				}
+			}
+		}
+		
+		// Shut down the daemon
+		daemon.shutdown();
 	}
 }

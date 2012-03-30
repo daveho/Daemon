@@ -27,6 +27,11 @@ public class ExampleDaemon implements IDaemon {
 	public void start() {
 		System.out.println("Daemon is starting!");
 	}
+	
+	@Override
+	public void handleCommand(String command) {
+		System.out.println("Received a command: " + command);
+	}
 
 	@Override
 	public void shutdown() {

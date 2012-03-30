@@ -32,6 +32,13 @@ public interface IDaemon {
 	public void start();
 	
 	/**
+	 * Handle a command received via the FIFO.
+	 * 
+	 * @param command the command to handle
+	 */
+	public void handleCommand(String command);
+	
+	/**
 	 * Stop the daemon.
 	 */
 	public void shutdown();

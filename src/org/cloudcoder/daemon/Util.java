@@ -23,10 +23,12 @@ package org.cloudcoder.daemon;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,7 +60,7 @@ public class Util {
 	}
 	
 	private static Integer doReadPid(String instanceName) throws IOException {
-		File pidFile = new File(instanceName + ".pid");
+		File pidFile = new File(getPidFileName(instanceName));
 		
 		if (!pidFile.exists()) {
 			return null;
@@ -81,6 +83,27 @@ public class Util {
 		} finally {
 			IOUtil.closeQuietly(reader);
 		}
+	}
+
+	/**
+	 * Get the name of the pid file for given instance name.
+	 * 
+	 * @param instanceName  an instance name
+	 * @return  the pid file name for that instance name
+	 */
+	public static String getPidFileName(String instanceName) {
+		return instanceName + ".pid";
+	}
+	
+	/**
+	 * Get the name of the FIFO for given instance name and process id.
+	 * 
+	 * @param instanceName the instance name
+	 * @param pid          the pid
+	 * @return  the FIFO name for the isntance name and process id
+	 */
+	public static String getFifoName(String instanceName, Integer pid) {
+		return instanceName + "-" + pid.toString() + ".fifo";
 	}
 
 	private static final Pattern PID_FROM_PS = Pattern.compile("^\\s*(\\d+)");
@@ -210,4 +233,58 @@ public class Util {
 		return result;
 	}
 
+	/**
+	 * Delete a file.
+	 * @param fileName name of the file to delete
+	 */
+	public static void deleteFile(String fileName) {
+		File file = new File(fileName);
+		file.delete();
+	}
+
+	/**
+	 * Send a command to the daemon process.
+	 * 
+	 * @param instanceName   the instance name
+	 * @param pid            the pid of the daemon process
+	 * @param command        the command to send
+	 * @throws DaemonException 
+	 */
+	public static void sendCommand(String instanceName, Integer pid, String command) throws DaemonException {
+		try {
+			doSendCommand(instanceName, pid, command);
+		} catch (IOException e) {
+			throw new DaemonException("Error sending command to daemon", e);
+		}
+	}
+
+	private static void doSendCommand(String instanceName, Integer pid, String command) throws IOException {
+		FileWriter writer = new FileWriter(getFifoName(instanceName, pid));
+		writer.write(command);
+		writer.write("\n");
+	}
+
+	/**
+	 * Execute a process.
+	 * 
+	 * @param cmd the command (program and arguments)
+	 * @return 
+	 * @throws DaemonException
+	 */
+	public static int exec(String... cmd) throws DaemonException {
+		try {
+			return doExec(cmd);
+		} catch (IOException e) {
+			throw new DaemonException("Error executing command", e);
+		}
+	}
+
+	private static int doExec(String... cmd) throws IOException {
+		Process proc = Runtime.getRuntime().exec(cmd, getenvp());
+		try {
+			return proc.waitFor();
+		} catch (InterruptedException e) {
+			throw new IOException("Interrupted waiting for process to copmlete", e);
+		}
+	}
 }
