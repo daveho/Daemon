@@ -14,16 +14,18 @@ the project.  Run the following commands:
 
 ```
 ./mkjar.sh
-java -classpath daemon.jar org.cloudcoder.daemon.example.ExampleDaemonController start
-java -classpath daemon.jar org.cloudcoder.daemon.example.ExampleDaemonController hello
-java -classpath daemon.jar org.cloudcoder.daemon.example.ExampleDaemonController shutdown
+java -jar daemon.jar start
+java -jar daemon.jar hello
+java -jar daemon.jar shutdown
 ```
 
+The example shows how
+you might package your daemon in a single jar file for deployment.
 The last three commands will (respectively) start the daemon, send a command
 ("hello") to the daemon, and shut down the daemon.
-
-A file called `log.txt` will be created.  Each command (start/hello/shutdown) will
-be logged.
+A file called `log.txt` will be created to capture the standard output
+of the daemon.  Each command (start/hello/shutdown) will
+be logged in this file.
 
 Some things to note:
 
