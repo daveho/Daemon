@@ -155,7 +155,7 @@ public class Util {
 		BufferedReader reader = null; 
 		
 		try {
-			reader = readProcess("ps");
+			reader = readProcess("/bin/ps");
 			while (true) {
 				String line = reader.readLine();
 				if (line == null) {
