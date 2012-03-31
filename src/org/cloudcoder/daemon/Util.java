@@ -43,6 +43,40 @@ import java.util.regex.Pattern;
  */
 public class Util {
 	/**
+	 * Path to sh executable, or null if it can't be found.
+	 */
+	public static final String SH_PATH = findExe("sh", "/bin", "/usr/bin");
+
+	/**
+	 * Path to ps executable, or null if it can't be found.
+	 */
+	public static final String PS_PATH = findExe("ps", "/bin", "/usr/bin");
+	
+	/**
+	 * Path to mkfifo executable, or null if it can't be found.
+	 */
+	public static final String MKFIFO_PATH = findExe("mkfifo", "/bin", "/usr/bin");
+	
+	/**
+	 * Find the executable with the given name by checking the directories
+	 * in the given path in order.
+	 * 
+	 * @param exeName  an executable name (e.g., "mkfifo")
+	 * @param path     a path (e.g., "/bin", "/usr/bin")
+	 * @return full path to the executable, or null if the executable can't be found 
+	 * @throws DaemonException
+	 */
+	public static String findExe(String exeName, String...path) {
+		for (String dir : path) {
+			File f = new File(dir + "/" + exeName);
+			if (f.exists()) { // XXX: should check if it is executable
+				return f.getPath();
+			}
+		}
+		return null;
+	}
+	
+	/**
 	 * Read the pid file for given instance, returning the pid.
 	 * 
 	 * @param instanceName  the instance name
@@ -155,7 +189,7 @@ public class Util {
 		BufferedReader reader = null; 
 		
 		try {
-			reader = readProcess("/bin/ps");
+			reader = readProcess(PS_PATH);
 			while (true) {
 				String line = reader.readLine();
 				if (line == null) {
@@ -336,7 +370,7 @@ public class Util {
 	}
 
 	private static Integer doGetPid() throws IOException {
-		BufferedReader reader = Util.readProcess("/bin/sh", "-c", "echo $PPID");
+		BufferedReader reader = Util.readProcess(SH_PATH, "-c", "echo $PPID");
 		try {
 			String line = reader.readLine();
 			if (line == null) {

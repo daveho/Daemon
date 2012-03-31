@@ -1,7 +1,7 @@
 This is a really simple Java library for starting, stopping, and controlling
 daemon processes written in Java on Unix/Linux.  It does not require any
 native code!  All OS-dependent functionality is implemented by executing
-subprocesses, specifically `/bin/sh` and `/bin/ps`.
+subprocesses, specifically `sh`, `ps`, and `mkfifo`.
 
 See the `ExampleDaemon` and `ExampleDaemonController` classes as an example
 of how to define a daemon.  The `ExampleDaemon` class has methods for

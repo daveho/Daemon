@@ -77,7 +77,7 @@ public class DaemonLauncher {
 		 */
 		
 		List<String> cmd = new ArrayList<String>();
-		cmd.add("/bin/sh");
+		cmd.add(Util.SH_PATH);
 		cmd.add("-c");
 		
 		// Generate the shell command that will launch the DaemonLauncher main method
@@ -120,7 +120,7 @@ public class DaemonLauncher {
 		Util.writePid(instanceName, pid);
 		
 		// Create FIFO
-		Util.exec("mkfifo", Util.getFifoName(instanceName, pid));
+		Util.exec(Util.MKFIFO_PATH, Util.getFifoName(instanceName, pid));
 		
 		// Instantiate the daemon
 		Class<?> daemonClass = Class.forName(daemonClassName);
