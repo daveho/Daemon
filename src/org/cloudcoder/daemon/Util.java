@@ -271,6 +271,9 @@ public class Util {
 				throw new IllegalStateException("jar: URL has no ! character?");
 			}
 			result = result.substring(0, bang);
+			if (!result.startsWith("file:")) {
+				throw new IllegalStateException("Codebase is a jar not loaded from a file: URL");
+			}
 			result = getFilenameFromFileURL(result);
 		} else {
 			throw new IllegalStateException("Unknown URL type: " + raw);
