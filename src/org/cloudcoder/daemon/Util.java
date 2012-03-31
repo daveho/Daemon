@@ -69,6 +69,9 @@ public class Util {
 		
 		try {
 			String line = reader.readLine();
+			if (line == null) {
+				return null;
+			}
 			line = line.trim();
 			
 			Integer pid = null;
