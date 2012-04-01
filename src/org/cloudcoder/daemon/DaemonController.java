@@ -108,15 +108,26 @@ public abstract class DaemonController {
 			launcher.launch(instanceName, getDaemonClass());
 		} else if (command.equals("shutdown")) {
 			// shutdown command
-			Integer pid = Util.readPid(instanceName);
+			Integer pid = getPidOfInstance(instanceName);
 			Util.sendCommand(instanceName, pid, "shutdown");
 			Util.waitForExit(pid);
 			Util.cleanup(instanceName, pid);
 		} else {
 			// some other command
-			Integer pid = Util.readPid(instanceName);
+			Integer pid = getPidOfInstance(instanceName);
 			Util.sendCommand(instanceName, pid, command);
 		}
+	}
+
+	private Integer getPidOfInstance(String instanceName) throws DaemonException {
+		Integer pid = Util.readPid(instanceName);
+		if (pid == null) {
+			throw new DaemonException("No pid found for instance " + instanceName);
+		}
+		if (!Util.isRunning(pid)) {
+			throw new DaemonException("Instance " + instanceName + " is not running (old pid=" + pid + ")");
+		}
+		return pid;
 	}
 	
 	/**
