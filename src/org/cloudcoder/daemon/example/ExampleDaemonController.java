@@ -25,7 +25,8 @@ import org.cloudcoder.daemon.IDaemon;
 
 /**
  * An example main class to start, shut down, and control
- * your daemon process.
+ * your daemon process.  If you are creating an executable jar file,
+ * a class like this one should be the main class.
  * 
  * @author David Hovemeyer
  */
