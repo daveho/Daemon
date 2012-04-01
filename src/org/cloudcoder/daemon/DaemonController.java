@@ -36,6 +36,7 @@ public abstract class DaemonController {
 	private static class Options {
 		private String command;
 		private String instanceName;
+		private String stdoutLogFileName;
 		
 		public Options() {
 			
@@ -52,6 +53,8 @@ public abstract class DaemonController {
 
 				if (arg.startsWith("--instance=")) {
 					instanceName = arg.substring("--instance=".length());
+				} else if (arg.startsWith("--stdoutLog=")) {
+					stdoutLogFileName = arg.substring("--stdoutLog=".length());
 				} else {
 					throw new IllegalArgumentException("Unknown option: " + arg);
 				}
@@ -74,6 +77,10 @@ public abstract class DaemonController {
 
 		public String getInstanceName() {
 			return instanceName;
+		}
+		
+		public String getStdoutLogFileName() {
+			return stdoutLogFileName;
 		}
 	}
 	
@@ -105,6 +112,12 @@ public abstract class DaemonController {
 		
 		if (command.equals("start")) {
 			DaemonLauncher launcher = new DaemonLauncher();
+			
+			// If a stdout log file name was provided, use it
+			if (opts.getStdoutLogFileName() != null) {
+				launcher.setStdoutLogFile(opts.getStdoutLogFileName());
+			}
+			
 			launcher.launch(instanceName, getDaemonClass());
 		} else if (command.equals("shutdown")) {
 			// shutdown command

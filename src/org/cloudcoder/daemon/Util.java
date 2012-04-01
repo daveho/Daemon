@@ -430,4 +430,24 @@ public class Util {
 		Util.deleteFile(getPidFileName(instanceName));
 		Util.deleteFile(getFifoName(instanceName, pid));
 	}
+	
+	// XXX: any others that should be added?
+	private static final String SHELL_META = "'\"\\$`";
+	
+	/**
+	 * Determine whether or not given string contains any shell metacharacters.
+	 * 
+	 * @param s
+	 * @return true if the string contains shell metacharacters,
+	 *         false otherwise
+	 */
+	public static boolean hasShellMetaCharacters(String s) {
+		for (int i = 0; i < s.length(); i++) {
+			if (SHELL_META.indexOf(s.charAt(i)) >= 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

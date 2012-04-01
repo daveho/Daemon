@@ -34,6 +34,30 @@ import java.util.List;
  * @author David Hovemeyer
  */
 public class DaemonLauncher {
+	public static final String DEFAULT_STDOUT_LOG_FILE = "log.txt";
+	
+	private String stdoutLogFile;
+	
+	/**
+	 * Constructor.
+	 */
+	public DaemonLauncher() {
+		this.stdoutLogFile = DEFAULT_STDOUT_LOG_FILE;
+	}
+	
+	/**
+	 * Set the name of the file to which the stdout of the daemon will
+	 * be redirected.
+	 * 
+	 * @param stdoutLogFile name of stdout log file
+	 */
+	public void setStdoutLogFile(String stdoutLogFile) {
+		if (Util.hasShellMetaCharacters(stdoutLogFile)) {
+			throw new IllegalArgumentException("Stdout log file name may not contain shell metacharacters");
+		}
+		this.stdoutLogFile = stdoutLogFile;
+	}
+	
 	/**
 	 * Launch the daemon as a background process (with a FIFO for communication).
 	 * 
@@ -68,8 +92,8 @@ public class DaemonLauncher {
 
 		String classPath = classPathBuilder.toString();
 		
-		if (classPath.indexOf('\'') >= 0 || classPath.indexOf('"') >= 0) {
-			throw new IllegalArgumentException("Classpath has embedded quote characters");
+		if (Util.hasShellMetaCharacters(classPath)) {
+			throw new IllegalArgumentException("Classpath has shell metacharacters");
 		}
 		
 		/*
@@ -85,11 +109,13 @@ public class DaemonLauncher {
 		StringBuilder launchCmdBuilder = new StringBuilder();
 		launchCmdBuilder.append("( exec java -classpath '");
 		launchCmdBuilder.append(classPath);
-		launchCmdBuilder.append("' org.cloudcoder.daemon.DaemonLauncher ");
+		launchCmdBuilder.append("' '" + DaemonLauncher.class.getName() + "' ");
 		launchCmdBuilder.append(instanceName);
 		launchCmdBuilder.append(" '");
 		launchCmdBuilder.append(daemonClass.getName());
-		launchCmdBuilder.append("' >> log.txt ) &");
+		launchCmdBuilder.append("' >> '");
+		launchCmdBuilder.append(stdoutLogFile);
+		launchCmdBuilder.append("' ) &");
 		String launchCmd = launchCmdBuilder.toString();
 		//System.out.println("launchCmd=" + launchCmd);
 		
