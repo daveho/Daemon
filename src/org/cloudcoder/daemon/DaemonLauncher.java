@@ -96,10 +96,6 @@ public class DaemonLauncher {
 			throw new IllegalArgumentException("Classpath has shell metacharacters");
 		}
 		
-		/*
-		 * /bin/sh -c '( java -classpath '[classpath]' org.cloudcoder.daemon.DaemonLauncher instanceName '[daemonClassName]' >> log.txt) & '   
-		 */
-		
 		List<String> cmd = new ArrayList<String>();
 		cmd.add(Util.SH_PATH);
 		cmd.add("-c");
@@ -113,7 +109,7 @@ public class DaemonLauncher {
 		launchCmdBuilder.append(instanceName);
 		launchCmdBuilder.append(" '");
 		launchCmdBuilder.append(daemonClass.getName());
-		launchCmdBuilder.append("' >> '");
+		launchCmdBuilder.append("' < /dev/null >> '");
 		launchCmdBuilder.append(stdoutLogFile);
 		launchCmdBuilder.append("' ) &");
 		String launchCmd = launchCmdBuilder.toString();
