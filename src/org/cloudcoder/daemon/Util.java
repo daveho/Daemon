@@ -353,7 +353,7 @@ public class Util {
 		try {
 			return proc.waitFor();
 		} catch (InterruptedException e) {
-			throw new IOException("Interrupted waiting for process to copmlete", e);
+			throw new IOException("Interrupted waiting for process to complete", e);
 		}
 	}
 
