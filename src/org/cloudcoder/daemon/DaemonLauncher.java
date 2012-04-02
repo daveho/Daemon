@@ -46,10 +46,10 @@ public class DaemonLauncher {
 	}
 	
 	/**
-	 * Set the name of the file to which the stdout of the daemon will
+	 * Set the name of the file to which the stdout/stderr of the daemon will
 	 * be redirected.
 	 * 
-	 * @param stdoutLogFile name of stdout log file
+	 * @param stdoutLogFile name of stdout/stderr log file
 	 */
 	public void setStdoutLogFile(String stdoutLogFile) {
 		if (Util.hasShellMetaCharacters(stdoutLogFile)) {
@@ -111,7 +111,7 @@ public class DaemonLauncher {
 		launchCmdBuilder.append(daemonClass.getName());
 		launchCmdBuilder.append("' < /dev/null >> '");
 		launchCmdBuilder.append(stdoutLogFile);
-		launchCmdBuilder.append("' ) &");
+		launchCmdBuilder.append("' 2>&1 ) &");
 		String launchCmd = launchCmdBuilder.toString();
 		//System.out.println("launchCmd=" + launchCmd);
 		

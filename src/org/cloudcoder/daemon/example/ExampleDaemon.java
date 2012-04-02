@@ -31,6 +31,7 @@ public class ExampleDaemon implements IDaemon {
 	@Override
 	public void handleCommand(String command) {
 		System.out.println("Received a command: " + command);
+		System.err.println("Same command, to stderr: " + command);
 	}
 
 	@Override

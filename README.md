@@ -1,6 +1,8 @@
 This is a really simple Java library for starting, stopping, and controlling
-daemon processes written in Java on Unix/Linux.  It does not require any
-native code!  All OS-dependent functionality is implemented by executing
+daemon processes written in Java on Unix/Linux.  To allow your program
+to run as a daemon, just link this library into your program.
+The library does not use native code, nor does it require external
+shell scripts.  All OS-dependent functionality is implemented by executing
 subprocesses, specifically `sh`, `ps`, and `mkfifo`.
 
 See the `ExampleDaemon` and `ExampleDaemonController` classes as an example
@@ -26,7 +28,7 @@ you might package your daemon in a single jar file for deployment.
 The last three commands will (respectively) start the daemon, send a command
 ("hello") to the daemon, and shut down the daemon.
 A file called `log.txt` will be created to capture the standard output
-of the daemon.  Each command (start/hello/shutdown) will
+and standard error of the daemon.  Each command (start/hello/shutdown) will
 be logged in this file.
 
 Some things to note:
