@@ -103,7 +103,9 @@ public class DaemonLauncher {
 		// Generate the shell command that will launch the DaemonLauncher main method
 		// as a background process
 		StringBuilder launchCmdBuilder = new StringBuilder();
-		launchCmdBuilder.append("( exec java -classpath '");
+		launchCmdBuilder.append("( exec '");
+		launchCmdBuilder.append(Util.getJvmExecutablePath());
+		launchCmdBuilder.append("' -classpath '");
 		launchCmdBuilder.append(classPath);
 		launchCmdBuilder.append("' '" + DaemonLauncher.class.getName() + "' ");
 		launchCmdBuilder.append(instanceName);

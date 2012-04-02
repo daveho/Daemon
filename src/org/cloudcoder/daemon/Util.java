@@ -450,4 +450,23 @@ public class Util {
 		return false;
 	}
 
+	/**
+	 * Get the path of the JVM executable.
+	 * Tries to identify the same JVM executable as the one
+	 * that is executing currently.  Otherwise, just returns
+	 * "java".  Note that the full JVM executable path will 
+	 * (probably) only be found on Linux/Unix for JRE/JDK
+	 * installations that use the standard directory layout.
+	 * 
+	 * @return path to JVM executable
+	 */
+	public static Object getJvmExecutablePath() {
+		String javaHome = System.getProperty("java.home");
+		File jvmExe = new File(javaHome + "/bin/java");
+		if (jvmExe.exists()) {
+			return jvmExe.getPath();
+		}
+		return "java";
+	}
+
 }
