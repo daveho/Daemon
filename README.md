@@ -17,10 +17,10 @@ if you import the project into Eclipse).  Then cd to the root directory of
 the project.  Run the following commands:
 
 ```
-./mkjar.sh
-java -jar daemon.jar start
-java -jar daemon.jar hello
-java -jar daemon.jar shutdown
+./mkdemojar.sh
+java -jar demo.jar start
+java -jar demo.jar hello
+java -jar demo.jar shutdown
 ```
 
 The example shows how
@@ -41,6 +41,10 @@ Some things to note:
   daemon is started.  You can run many daemon processes from the
   same codebase in the same directory as long as they all have
   different instance names.
+
+To build the code as a jar file, build the `jar` target in the
+provided `build.xml` using Ant.  This will create a jar file called
+`daemon.jar`.
 
 The code is distributed under the MIT license.
 
