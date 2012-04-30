@@ -24,8 +24,8 @@ import org.cloudcoder.daemon.IDaemon;
 
 public class ExampleDaemon implements IDaemon {
 	@Override
-	public void start() {
-		System.out.println("Daemon is starting!");
+	public void start(String instanceName) {
+		System.out.println("Daemon (instance name=" + instanceName + ") is starting!");
 	}
 	
 	@Override

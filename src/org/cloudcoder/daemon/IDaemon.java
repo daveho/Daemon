@@ -28,8 +28,10 @@ package org.cloudcoder.daemon;
 public interface IDaemon {
 	/**
 	 * Start the daemon.
+	 * 
+	 * @param instanceName the instance name for this daemon
 	 */
-	public void start();
+	public void start(String instanceName);
 	
 	/**
 	 * Handle a command received via the FIFO.

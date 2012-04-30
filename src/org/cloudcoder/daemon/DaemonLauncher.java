@@ -151,7 +151,7 @@ public class DaemonLauncher {
 		IDaemon daemon = (IDaemon) daemonClass.newInstance();
 		
 		// Start the daemon!
-		daemon.start();
+		daemon.start(instanceName);
 		
 		// Read commands (issued by the DaemonController) from the FIFO
 		String fifoName = Util.getFifoName(instanceName, pid);
