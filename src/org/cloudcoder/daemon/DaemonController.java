@@ -32,8 +32,10 @@ package org.cloudcoder.daemon;
  * @author David Hovemeyer
  */
 public abstract class DaemonController {
-	
-	private static class Options {
+	/**
+	 * Command line options handling class.
+	 */
+	public static class Options {
 		private String command;
 		private String instanceName;
 		private String stdoutLogFileName;
@@ -51,13 +53,7 @@ public abstract class DaemonController {
 					break;
 				}
 
-				if (arg.startsWith("--instance=")) {
-					instanceName = arg.substring("--instance=".length());
-				} else if (arg.startsWith("--stdoutLog=")) {
-					stdoutLogFileName = arg.substring("--stdoutLog=".length());
-				} else {
-					throw new IllegalArgumentException("Unknown option: " + arg);
-				}
+				handleOption(arg);
 			}
 			
 			if (i >= args.length) {
@@ -68,6 +64,23 @@ public abstract class DaemonController {
 			
 			if (i != args.length - 1) {
 				throw new IllegalArgumentException("Extra arguments");
+			}
+		}
+
+		/**
+		 * Handle a single option.  Subclasses may override
+		 * to handle their own specific options.  Subclasses
+		 * should delegate to this method for general options.
+		 * 
+		 * @param arg the option argument, which will begin with "--"
+		 */
+		protected void handleOption(String arg) {
+			if (arg.startsWith("--instance=")) {
+				instanceName = arg.substring("--instance=".length());
+			} else if (arg.startsWith("--stdoutLog=")) {
+				stdoutLogFileName = arg.substring("--stdoutLog=".length());
+			} else {
+				throw new IllegalArgumentException("Unknown option: " + arg);
 			}
 		}
 		
@@ -100,7 +113,7 @@ public abstract class DaemonController {
 	}
 
 	private void doExec(String[] args) throws DaemonException {
-		Options opts = new Options();
+		Options opts = createOptions();
 		opts.parse(args);
 		
 		String command = opts.getCommand();
@@ -130,6 +143,17 @@ public abstract class DaemonController {
 			Integer pid = getPidOfInstance(instanceName);
 			Util.sendCommand(instanceName, pid, command);
 		}
+	}
+
+	/**
+	 * Create the {@link Options} object that will parse the command line
+	 * options.  Subclasses may override this to return their own
+	 * specific Options object.
+	 * 
+	 * @return the Options object to use to parse the command line
+	 */
+	protected Options createOptions() {
+		return new Options();
 	}
 
 	private Integer getPidOfInstance(String instanceName) throws DaemonException {
