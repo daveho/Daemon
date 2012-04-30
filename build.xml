@@ -1,0 +1,12 @@
+<project name="daemon" default="jar">
+
+	<target name="javac">
+		<mkdir dir="bin"/>
+		<javac srcdir="src" destdir="bin"/> 
+	</target>
+	
+	<target name="jar" depends="javac">
+		<jar destfile="daemon.jar" basedir="bin" includes="**/*.class" excludes="org/cloudcoder/daemon/example/*"/>
+	</target>
+
+</project>
