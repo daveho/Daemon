@@ -117,6 +117,20 @@ public class DaemonLauncher {
 		String launchCmd = launchCmdBuilder.toString();
 		//System.out.println("launchCmd=" + launchCmd);
 		
+		// Make sure that the directory for the stdout log file exists.
+		// If this directory doesn't exist, then the launch command will
+		// silently fail.
+		File stdoutLogFileDir = new File(stdoutLogFile).getParentFile();
+		if (stdoutLogFileDir != null) {
+			// There is at least one explicitly directory component in the
+			// name of the stdout log file.  Try to create the directory
+			// if it doesn't already exist.  (If it exists but is a file,
+			// treat that as a failure to create the directory.)
+			if (!stdoutLogFileDir.isDirectory() || (!stdoutLogFileDir.exists() && !stdoutLogFileDir.mkdirs())) {
+				throw new DaemonException("Could not create directory for stdout log " + stdoutLogFile);
+			}
+		}
+		
 		cmd.add(launchCmd);
 		
 		int exitCode = Util.exec(cmd.toArray(new String[cmd.size()]));
