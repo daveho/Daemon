@@ -20,15 +20,19 @@
 
 package org.cloudcoder.daemon;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -504,5 +508,102 @@ public class Util {
 			throw new IllegalStateException("Couldn't load properties " + resourcePath);
 		}
 		return properties;
+	}
+	
+	private static Map<String, String> resourceNameToFileMap = new HashMap<String, String>();
+	private static Object resourceNameToFileMapLock = new Object();
+	
+	/**
+	 * Take a resource that is loadable from the given classloader
+	 * and make it available as a file in the filesystem.
+	 * If the app is running from a jarfile, loaded resources aren't
+	 * directly available as files (the way they would be if the
+	 * app is running out of a directory containing the app's class files.)
+	 * This method will copy an internal resource to an external
+	 * file if necessary.
+	 * 
+	 * @param clsLoader    the ClassLoader containing the resource
+	 * @param resourceName the name of the resource to externalize
+	 * @return the filename of the externalized resource
+	 * @throws IOException if the resource can't be externalized
+	 */
+	public static String getExternalizedFileName(ClassLoader clsLoader, String resourceName) throws IOException {
+		String filePath = null;
+		File tmpFile = null;
+		
+		// See if the resource has already been externalized.
+		synchronized (resourceNameToFileMapLock) {
+			filePath = resourceNameToFileMap.get(resourceName);
+			if (filePath != null) {
+				return filePath;
+			}
+		}
+		
+		// Get a URL to access the resource.
+		URL url = clsLoader.getResource(resourceName);
+		if (url == null) {
+			throw new IllegalArgumentException("Resource " + resourceName + " does not exist");
+		}
+		String urlString = url.toExternalForm();
+		
+		// If the URL is a file: URL, then just compute the filename.
+		if (urlString.startsWith("file:")) {
+			if (urlString.startsWith("file://")) {
+				filePath = urlString.substring("file://".length());
+			} else {
+				filePath = urlString.substring("file:".length());
+			}
+		} else {
+			// This is some other kind of URL (probably a jar: URL).
+			// Copy its data to a temporary file.
+			InputStream in = null;
+			OutputStream out = null;
+			
+			try {
+				// Create a temp file that is marked for deletion when the program exits.
+				File f = File.createTempFile("cctemp", null);
+				f.deleteOnExit();
+				
+				// Copy data from the resource into the temp file.
+				in = url.openStream();
+				out = new BufferedOutputStream(new FileOutputStream(f));
+				IOUtil.copy(in, out);
+
+				// Success!
+				filePath = f.getAbsolutePath();
+				tmpFile = f;
+			} finally {
+				IOUtil.closeQuietly(in);
+				IOUtil.closeQuietly(out);
+			}
+		}
+		
+		if (filePath == null) {
+			// This should be impossible
+			throw new IllegalStateException("could not externalize resource?");
+		}
+		
+		// Try to add the externalized filename to the map.
+		// Note that we could be racing against another thread.
+		// If we notice that an externalized filename has already been
+		// added, then we will just use that one (and abandon the
+		// one created by this method call.)
+		synchronized (resourceNameToFileMapLock) {
+			String existingFilePath = resourceNameToFileMap.get(resourceName);
+			if (existingFilePath != null) {
+				// Another thread already added an externalized file name.
+				if (tmpFile != null) {
+					// We created a temp file (that is not needed now), so delete it.
+					tmpFile.delete();
+				}
+				return existingFilePath;
+			}
+			
+			// Update the map
+			resourceNameToFileMap.put(resourceName, filePath);
+		}
+		
+		// Return the externalized file path.
+		return filePath;
 	}
 }

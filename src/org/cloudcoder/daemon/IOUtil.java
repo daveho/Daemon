@@ -22,6 +22,8 @@ package org.cloudcoder.daemon;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * IO utility methods.
@@ -42,6 +44,27 @@ public class IOUtil {
 			obj.close();
 		} catch (IOException e) {
 			// ignore
+		}
+	}
+	
+	/**
+	 * Copy as much data as possible from given input stream to given output stream.
+	 * 
+	 * @param in  an InputStream
+	 * @param out an OutputStream
+	 * @throws IOException
+	 */
+	public static void copy(InputStream in, OutputStream out) throws IOException {
+		byte[] buf = new byte[4096];
+
+		boolean done = false;
+		while (!done) {
+			int numRead = in.read(buf);
+			if (numRead < 0) {
+				done = true;
+			} else {
+				out.write(buf, 0, numRead);
+			}
 		}
 	}
 }
