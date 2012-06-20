@@ -2,7 +2,7 @@
 
 	<target name="javac">
 		<mkdir dir="bin"/>
-		<javac srcdir="src" destdir="bin"/> 
+		<javac source="1.6" target="1.6" srcdir="src" destdir="bin"/> 
 	</target>
 	
 	<target name="jar" depends="javac">

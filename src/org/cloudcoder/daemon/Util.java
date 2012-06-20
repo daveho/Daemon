@@ -25,10 +25,12 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +40,10 @@ import java.util.regex.Pattern;
  * of a process, creating FIFOs, etc.  In theory these will
  * work on any Unix, but in practice they are probably only
  * tested on Linux.
+ * 
+ * <p> This class also has some general-purpose utility methods
+ * such as {@link #loadPropertiesFromResource(ClassLoader, String)
+ * that might be useful for applications.
  * 
  * @author David Hovemeyer
  */
@@ -469,4 +475,34 @@ public class Util {
 		return "java";
 	}
 
+	/**
+	 * Load properties from a resource embedded in the classpath.
+	 * Note that an IllegalStateException is thrown if the properties
+	 * cannot be loaded from the resource: therefore, this
+	 * method should probably only be used to load properties that are
+	 * guaranteed to be present.
+	 * 
+	 * @param clsLoader     the ClassLoader to load the resource from
+	 * @param resourcePath  the resource from which the properties should be loaded
+	 * @return the Properties loaded from the resource
+	 * @throws IllegalStateException if the properties cannot be loaded
+	 */
+	public static Properties loadPropertiesFromResource(ClassLoader clsLoader, String resourcePath) {
+		URL propURL = clsLoader.getResource(resourcePath);
+		if (propURL == null) {
+			throw new IllegalStateException("Couldn't find properties " + resourcePath);
+		}
+		Properties properties = new Properties();
+		try {
+			InputStream in = propURL.openStream();
+			try {
+				properties.load(in);
+			} finally {
+				in.close();
+			}
+		} catch (Exception e) {
+			throw new IllegalStateException("Couldn't load properties " + resourcePath);
+		}
+		return properties;
+	}
 }
