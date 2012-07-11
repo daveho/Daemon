@@ -122,11 +122,14 @@ public class DaemonLauncher {
 		// silently fail.
 		File stdoutLogFileDir = new File(stdoutLogFile).getParentFile();
 		if (stdoutLogFileDir != null) {
-			// There is at least one explicitly directory component in the
-			// name of the stdout log file.  Try to create the directory
-			// if it doesn't already exist.  (If it exists but is a file,
-			// treat that as a failure to create the directory.)
-			if (!stdoutLogFileDir.isDirectory() || (!stdoutLogFileDir.exists() && !stdoutLogFileDir.mkdirs())) {
+			// There is at least one explicit directory component in the
+			// name of the stdout log file.
+			if (stdoutLogFileDir.exists() && !stdoutLogFileDir.isDirectory()) {
+				// Parent directory exists, but isn't a directory.
+				throw new DaemonException("Parent directory for stdout log " + stdoutLogFile + " exists but is not a directory");
+			}
+			if (!stdoutLogFileDir.exists() && !stdoutLogFileDir.mkdirs()) {
+				// Parent directory doesn't exist, but we couldn't create it.
 				throw new DaemonException("Could not create directory for stdout log " + stdoutLogFile);
 			}
 		}
