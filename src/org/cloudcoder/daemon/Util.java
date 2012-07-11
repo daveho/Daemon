@@ -199,7 +199,8 @@ public class Util {
 		BufferedReader reader = null; 
 		
 		try {
-			reader = readProcess(PS_PATH);
+			// Note that we need to run ps -e in order to see all processes
+			reader = readProcess(PS_PATH, "-e");
 			while (true) {
 				String line = reader.readLine();
 				if (line == null) {
