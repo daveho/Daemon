@@ -157,7 +157,15 @@ public abstract class DaemonController {
 			// shutdown command
 			Integer pid = getPidOfInstance(instanceName);
 			Util.sendCommand(instanceName, pid, "shutdown");
-			Util.waitForExit(pid);
+			System.out.print("Waiting for process " + pid + " to finish...");
+			System.out.flush();
+			Util.waitForExit(pid, new Runnable(){
+				@Override
+				public void run() {
+					System.out.print(".");
+					System.out.flush();
+				}
+			});
 			Util.cleanup(instanceName, pid);
 		} else {
 			// some other command

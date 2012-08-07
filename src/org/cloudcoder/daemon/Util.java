@@ -199,7 +199,8 @@ public class Util {
 		BufferedReader reader = null; 
 		
 		try {
-			reader = readProcess(PS_PATH);
+			// Note that we need to run ps -e in order to see all processes
+			reader = readProcess(PS_PATH, "-e");
 			while (true) {
 				String line = reader.readLine();
 				if (line == null) {
@@ -347,7 +348,7 @@ public class Util {
 	 * Execute a process.
 	 * 
 	 * @param cmd the command (program and arguments)
-	 * @return 
+	 * @return the process's exit code
 	 * @throws DaemonException
 	 */
 	public static int exec(String... cmd) throws DaemonException {
@@ -403,28 +404,29 @@ public class Util {
 	 * Wait for given process to exit.
 	 * 
 	 * @param pid  the pid of the process to wait for
+	 * @param callback callback whose run() method is called periodically (once per second)
+	 *                 if the process is still running
 	 * @throws DaemonException
 	 */
-	public static void waitForExit(Integer pid) throws DaemonException {
+	public static void waitForExit(Integer pid, Runnable callback) throws DaemonException {
 		try {
-			doWaitForExit(pid);
+			doWaitForExit(pid, callback);
 		} catch (IOException e) {
 			throw new DaemonException("Error waiting for process to exit", e);
 		}
 	}
 
-	private static void doWaitForExit(Integer pid) throws DaemonException,
+	private static void doWaitForExit(Integer pid, Runnable callback) throws DaemonException,
 			IOException {
-		System.out.print("Waiting for process " + pid + " to finish...");
-		System.out.flush();
 		while (Util.isRunning(pid)) {
 			try { 
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				throw new IOException("Interrupted while waiting for process to exit", e);
 			}
-			System.out.print(".");
-			System.out.flush();
+			if (callback != null) {
+				callback.run();
+			}
 		}
 		System.out.println("done");
 	}
