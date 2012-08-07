@@ -34,16 +34,26 @@ package org.cloudcoder.daemon;
 public abstract class DaemonController {
 	/**
 	 * Command line options handling class.
+	 * DaemonController implementations may define their own
+	 * subclasses which override methods in this class.
 	 */
 	public static class Options {
 		private String command;
 		private String instanceName;
 		private String stdoutLogFileName;
+		private String jvmOptions;
 		
+		/**
+		 * Constructor.
+		 */
 		public Options() {
 			
 		}
 		
+		/**
+		 * Parse command line arguments.
+		 * @param args the command line arguments to parse
+		 */
 		public void parse(String[] args) {
 			int i;
 			for (i = 0; i < args.length; i++) {
@@ -79,6 +89,8 @@ public abstract class DaemonController {
 				instanceName = arg.substring("--instance=".length());
 			} else if (arg.startsWith("--stdoutLog=")) {
 				stdoutLogFileName = arg.substring("--stdoutLog=".length());
+			} else if (arg.startsWith("--jvmOptions=")) {
+				jvmOptions = arg.substring("--jvmOptions=".length());
 			} else {
 				throw new IllegalArgumentException("Unknown option: " + arg);
 			}
@@ -94,6 +106,10 @@ public abstract class DaemonController {
 		
 		public String getStdoutLogFileName() {
 			return stdoutLogFileName;
+		}
+
+		public String getJvmOptions() {
+			return jvmOptions;
 		}
 	}
 	
@@ -129,6 +145,11 @@ public abstract class DaemonController {
 			// If a stdout log file name was provided, use it
 			if (opts.getStdoutLogFileName() != null) {
 				launcher.setStdoutLogFile(opts.getStdoutLogFileName());
+			}
+			
+			// If JVM options were provided, use them
+			if (opts.getJvmOptions() != null) {
+				launcher.setJvmOptions(opts.getJvmOptions());
 			}
 			
 			launcher.launch(instanceName, getDaemonClass());

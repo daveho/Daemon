@@ -37,6 +37,7 @@ public class DaemonLauncher {
 	public static final String DEFAULT_STDOUT_LOG_FILE = "log.txt";
 	
 	private String stdoutLogFile;
+	private String jvmOptions;
 	
 	/**
 	 * Constructor.
@@ -57,7 +58,17 @@ public class DaemonLauncher {
 		}
 		this.stdoutLogFile = stdoutLogFile;
 	}
-	
+
+	/**
+	 * Set options to be passed to the JVM
+	 * (e.g., "-Xmx1024m -Djavax.net.debug=all").
+	 * 
+	 * @param jvmOptions options to be passed to the JVM
+	 */
+	public void setJvmOptions(String jvmOptions) {
+		this.jvmOptions = jvmOptions;
+	}
+
 	/**
 	 * Launch the daemon as a background process (with a FIFO for communication).
 	 * 
@@ -107,7 +118,12 @@ public class DaemonLauncher {
 		launchCmdBuilder.append(Util.getJvmExecutablePath());
 		launchCmdBuilder.append("' -classpath '");
 		launchCmdBuilder.append(classPath);
-		launchCmdBuilder.append("' '" + DaemonLauncher.class.getName() + "' ");
+		launchCmdBuilder.append("' ");
+		if (jvmOptions != null) {
+			launchCmdBuilder.append(jvmOptions);
+			launchCmdBuilder.append(" ");
+		}
+		launchCmdBuilder.append("'" + DaemonLauncher.class.getName() + "' ");
 		launchCmdBuilder.append(instanceName);
 		launchCmdBuilder.append(" '");
 		launchCmdBuilder.append(daemonClass.getName());
