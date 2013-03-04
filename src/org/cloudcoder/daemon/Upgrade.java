@@ -1,5 +1,5 @@
-// Copyright (c) 2012, Jaime Spacco <jspacco@knox.edu>
-// Copyright (c) 2012, David H. Hovemeyer <david.hovemeyer@gmail.com>
+// Copyright (c) 2013, Jaime Spacco <jspacco@knox.edu>
+// Copyright (c) 2013, David H. Hovemeyer <david.hovemeyer@gmail.com>
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ package org.cloudcoder.daemon;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +56,10 @@ import org.cloudcoder.daemon.Util;
  * @author David Hovemeyer
  */
 public class Upgrade {
+	// For debugging: set to false to bypass downloading
+	private static final boolean DOWNLOAD =
+			Boolean.valueOf(System.getProperty("daemon.upgrade.download", "true"));
+	
 	/**
 	 * Callback interface for upgrade events.
 	 * Can be used to provide visual indication of progress,
@@ -67,6 +72,14 @@ public class Upgrade {
 		public void noUpgradeNeeded();
 		
 		/**
+		 * Called if an upgrade is needed and downloading/configuring the latest
+		 * version of the jar file is about to proceed.
+		 * 
+		 * @param latestVersion the latest version
+		 */
+		public void upgradeNeeded(String latestVersion);
+		
+		/**
 		 * Called to indicate that an error occurred.
 		 * 
 		 * @param errMsg error message
@@ -77,6 +90,12 @@ public class Upgrade {
 		 * Called to indicate that download progress has been made.
 		 */
 		public void onDownloadTick();
+		
+		/**
+		 * Call to indicate that configuration files are being copoied from
+		 * the original jar file to the updated jar file.
+		 */
+		public void onConfigure();
 		
 		/**
 		 * Called to indicate that the upgrade succeeded.
@@ -133,8 +152,7 @@ public class Upgrade {
 		}
 	}
 	
-	
-	public void doUpgradeJarFile(final Callback callback) throws IOException {
+	private void doUpgradeJarFile(final Callback callback) throws IOException {
 		// Find the current application version
 		String currentVersion = getVersion(appCls);
 		
@@ -168,39 +186,87 @@ public class Upgrade {
 			return;
 		}
 		
+		// Upgrade is needed
+		callback.upgradeNeeded(latestVersion);
+		
 		// Presumably, if latest version is different than current version,
 		// then an upgrade is needed.
-		
-		// Determine full download URL
-		String fullDownloadUrl = downloadUrl + "/" + baseName + "-" + latestVersion + ".jar";
-		//System.out.println("Download " + fullDownloadUrl);
-		
-		// Download the latest jarfile
-		InputStream latestAppIn = null;
 		String latestJarFileName = baseName + "-" + latestVersion + ".jar";
-		File latestJarFile = new File(latestJarFileName);
-		if (latestJarFile.exists()) {
-			throw new IOException("Cannot upgrade: file " + latestJarFileName + " already exists");
-		}
-		OutputStream latestJarOut = new BufferedOutputStream(new FileOutputStream(latestJarFile));
-		try {
-			latestAppIn = new URL(fullDownloadUrl).openStream();
-			// Download progress tick once per megabyte
-			callback.onDownloadTick(); // one tick to get started...
-			IOUtil.copy(latestAppIn, latestJarOut, 1024*1024, new Runnable() {
-				@Override
-				public void run() {
-					callback.onDownloadTick();
-				}
-			});
-		} finally {
-			IOUtil.closeQuietly(latestJarOut);
-			IOUtil.closeQuietly(latestAppIn);
+		if (DOWNLOAD) {
+			// Determine full download URL
+			String fullDownloadUrl = downloadUrl + "/" + baseName + "-" + latestVersion + ".jar";
+			//System.out.println("Download " + fullDownloadUrl);
+			
+			// Download the latest jarfile
+			InputStream latestAppIn = null;
+			File latestJarFile = new File(latestJarFileName);
+			if (latestJarFile.exists()) {
+				throw new IOException("Cannot upgrade: file " + latestJarFileName + " already exists");
+			}
+			OutputStream latestJarOut = new BufferedOutputStream(new FileOutputStream(latestJarFile));
+			try {
+				latestAppIn = new URL(fullDownloadUrl).openStream();
+				// Download progress tick once per megabyte
+				callback.onDownloadTick(); // one tick to get started...
+				IOUtil.copy(latestAppIn, latestJarOut, 1024*1024, new Runnable() {
+					@Override
+					public void run() {
+						callback.onDownloadTick();
+					}
+				});
+			} finally {
+				IOUtil.closeQuietly(latestJarOut);
+				IOUtil.closeQuietly(latestAppIn);
+			}
 		}
 		
-		// TODO: configure
+		// Configure the downloaded jarfile (if necessary)
+		if (!configFileList.isEmpty()) {
+			doConfigure(latestJarFileName, callback);
+		}
 		
+		// Success!
 		callback.onSuccess(latestJarFileName);
+	}
+
+	private void doConfigure(String latestJarFileName, final Callback callback)
+			throws IOException, FileNotFoundException {
+		callback.onConfigure();
+		JarRewriter rewriter = new JarRewriter(latestJarFileName);
+		
+		// Save all configuration files to temp files
+		// and configure the Jar rewriter to use them
+		List<File> tmpConfigFileList = new ArrayList<File>();
+		for (String configFile : configFileList) {
+			File tmp = File.createTempFile("dvup", ".tmp");
+			tmp.deleteOnExit();
+			tmpConfigFileList.add(tmp);
+			//System.out.println(configFile + " ==> " + tmp.getAbsolutePath());
+			
+			InputStream configIn = appCls.getClassLoader().getResourceAsStream(configFile);
+			if (configIn == null) {
+				throw new IOException("Can't find configuration file " + configFile);
+			}
+			
+			OutputStream configOut = null;
+			try {
+				configOut = new FileOutputStream(tmp);
+				IOUtil.copy(configIn, configOut);
+			} finally {
+				IOUtil.closeQuietly(configOut);
+			}
+			
+			rewriter.replaceEntry(configFile, new JarRewriter.FileEntryData(tmp.getAbsolutePath()));
+			//System.out.println("Replace " + configFile + " with " + tmp.getAbsolutePath());
+		}
+
+		// Rewrite the upgraded jar file
+		rewriter.rewrite();
+		
+		// Eagerly delete the temp files
+		for (File tmp : tmpConfigFileList) {
+			tmp.delete();
+		}
 	}
 	
 	private String getVersion(Class<?> appCls) throws IOException {
