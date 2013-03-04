@@ -67,4 +67,36 @@ public class IOUtil {
 			}
 		}
 	}
+
+	/**
+	 * Copy as much data as possible from given input stream to given output stream,
+	 * invoking a callback periodically (which could drive a progress bar or
+	 * other indication of progress.)
+	 * 
+	 * @param in  an InputStream
+	 * @param out an OutputStream
+	 * @param sizeIncrement how often to invoke the callback (number of bytes)
+	 * @param callback callback to invoke periodically to indicate progress
+	 * @throws IOException 
+	 */
+	public static void copy(InputStream in, OutputStream out, int sizeIncrement, Runnable callback) throws IOException {
+		byte[] buf = new byte[4096];
+		int total = 0;
+		int nextTick = sizeIncrement;
+
+		boolean done = false;
+		while (!done) {
+			int numRead = in.read(buf);
+			if (numRead < 0) {
+				done = true;
+			} else {
+				total += numRead;
+				out.write(buf, 0, numRead);
+				if (total >= nextTick) {
+					callback.run();
+					nextTick = total + sizeIncrement;
+				}
+			}
+		}
+	}
 }
