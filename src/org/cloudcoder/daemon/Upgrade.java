@@ -52,6 +52,7 @@ import org.cloudcoder.daemon.Util;
  * <li>that ${downloadUrl}/${baseName}-${latestVersion}.jar is the download
  *     for the latest version (where ${latestVersion} is the version string
  *     found in ${downloadUrl}/LATEST</li>
+ * </ul>
  * 
  * @author David Hovemeyer
  */
@@ -173,8 +174,9 @@ public class Upgrade {
 		String latestVersion;
 		InputStream latestVersionIn = null;
 		try {
-			latestVersionIn = new URL(downloadUrl + "/LATEST").openStream();
-			latestVersion = readOneLine(latestVersionIn);
+			String latestVersionUrl = downloadUrl + "/LATEST";
+			latestVersionIn = new URL(latestVersionUrl).openStream();
+			latestVersion = readOneLine(latestVersionIn, latestVersionUrl + " seems to be empty");
 		} finally {
 			IOUtil.closeQuietly(latestVersionIn);
 		}
@@ -269,24 +271,31 @@ public class Upgrade {
 		}
 	}
 	
+	/**
+	 * Get the version string from the currently-running application.
+	 * 
+	 * @param appCls main class of the currently-running application
+	 * @return the version string
+	 * @throws IOException
+	 */
 	private String getVersion(Class<?> appCls) throws IOException {
 		InputStream in = appCls.getClassLoader().getResourceAsStream("VERSION");
 		if (in == null) {
 			throw new IOException("Cannot find version of this app");
 		}
 		try {
-			return readOneLine(in);
+			return readOneLine(in, "VERSION file in this application is empty");
 		} finally {
 			IOUtil.closeQuietly(in);
 		}
 	}
 
-	private String readOneLine(InputStream in) throws IOException {
+	private String readOneLine(InputStream in, String errMsgIfEmpty) throws IOException {
 		BufferedReader r = new BufferedReader(new InputStreamReader(in));
 		String line = r.readLine();
-		if (line == null) {
-			throw new IOException("VERSION file in this application is empty");
+		if (line == null || line.trim().equals("")) {
+			throw new IOException(errMsgIfEmpty);
 		}
-		return line;
+		return line.trim();
 	}
 }

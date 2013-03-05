@@ -32,7 +32,7 @@ public class DefaultUpgradeCallback implements Upgrade.Callback {
 	
 	@Override
 	public void onSuccess(String upgradedFileName) {
-		System.out.println("\nSuccess! Upgraded jar file is " + upgradedFileName);
+		System.out.println("Success! Upgraded jar file is " + upgradedFileName);
 	}
 	
 	@Override
@@ -67,6 +67,9 @@ public class DefaultUpgradeCallback implements Upgrade.Callback {
 	
 	@Override
 	public void onConfigure() {
-		System.out.println("\nCopying configuration files...");
+		// Download has just completed, so print a newline to end the
+		// line of "." characters.
+		System.out.println();
+		System.out.println("Copying configuration files...");
 	}
 }
