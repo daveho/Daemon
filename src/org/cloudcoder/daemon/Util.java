@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  * tested on Linux.
  * 
  * <p> This class also has some general-purpose utility methods
- * such as {@link #loadPropertiesFromResource(ClassLoader, String)
+ * such as {@link #loadPropertiesFromResource(ClassLoader, String)}
  * that might be useful for applications.
  * 
  * @author David Hovemeyer
