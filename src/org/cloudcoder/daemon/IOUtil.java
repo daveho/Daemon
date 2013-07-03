@@ -24,6 +24,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 
 /**
  * IO utility methods.
@@ -96,6 +98,27 @@ public class IOUtil {
 					callback.run();
 					nextTick = total + sizeIncrement;
 				}
+			}
+		}
+	}
+	
+	/**
+	 * Copy as much data as possible from given reader to given writer.
+	 * 
+	 * @param in  a Reader
+	 * @param out a Writer
+	 * @throws IOException
+	 */
+	public static void copy(Reader in, Writer out) throws IOException {
+		char[] buf = new char[4096];
+
+		boolean done = false;
+		while (!done) {
+			int numRead = in.read(buf);
+			if (numRead < 0) {
+				done = true;
+			} else {
+				out.write(buf, 0, numRead);
 			}
 		}
 	}
