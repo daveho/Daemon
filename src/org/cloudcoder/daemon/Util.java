@@ -522,14 +522,35 @@ public class Util {
 	 * directly available as files (the way they would be if the
 	 * app is running out of a directory containing the app's class files.)
 	 * This method will copy an internal resource to an external
-	 * file if necessary.
+	 * file in the system temporary directory if necessary.
+	 * 
+	 * @param clsLoader    the ClassLoader containing the resource
+	 * @param resourceName the name of the resource to externalize
+	 * @return the filename of the externalized resource
+	 * @throws IOException if the resource can't be externalized
+	 * @deprecated don't call this: call {@link #getExternalizedFileName(ClassLoader, String, File)} so that
+	 *             the temporary directory where the externalized file will be placed is specified
+	 *             explicitly
+	 */
+	public static String getExternalizedFileName(ClassLoader clsLoader, String resourceName) throws IOException {
+		return getExternalizedFileName(clsLoader, resourceName, new File(System.getProperty("java.io.tmpdir")));
+	}
+
+	/**
+	 * Take a resource that is loadable from the given classloader
+	 * and make it available as a file in the filesystem.
+	 * If the app is running from a jarfile, loaded resources aren't
+	 * directly available as files (the way they would be if the
+	 * app is running out of a directory containing the app's class files.)
+	 * This method will copy an internal resource to an external
+	 * file in the specified if necessary.
 	 * 
 	 * @param clsLoader    the ClassLoader containing the resource
 	 * @param resourceName the name of the resource to externalize
 	 * @return the filename of the externalized resource
 	 * @throws IOException if the resource can't be externalized
 	 */
-	public static String getExternalizedFileName(ClassLoader clsLoader, String resourceName) throws IOException {
+	public static String getExternalizedFileName(ClassLoader clsLoader, String resourceName, File tempDir) throws IOException {
 		String filePath = null;
 		File tmpFile = null;
 		
@@ -563,7 +584,7 @@ public class Util {
 			
 			try {
 				// Create a temp file that is marked for deletion when the program exits.
-				File f = File.createTempFile("cctemp", null);
+				File f = File.createTempFile("cctemp", null, tempDir);
 				f.deleteOnExit();
 				
 				// Copy data from the resource into the temp file.
