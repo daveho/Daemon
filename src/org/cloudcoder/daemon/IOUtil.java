@@ -1,4 +1,4 @@
-// Copyright (c) 2012, David H. Hovemeyer <david.hovemeyer@gmail.com>
+// Copyright (c) 2012-2014, David H. Hovemeyer <david.hovemeyer@gmail.com>
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,9 @@ public class IOUtil {
 	 */
 	public static void closeQuietly(Closeable obj) {
 		try {
-			obj.close();
+			if (obj != null) {
+				obj.close();
+			}
 		} catch (IOException e) {
 			// ignore
 		}
