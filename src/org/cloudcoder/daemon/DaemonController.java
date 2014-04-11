@@ -167,6 +167,23 @@ public abstract class DaemonController {
 				}
 			});
 			Util.cleanup(instanceName, pid);
+		} else if (command.equals("check")) {
+			// check to see if process is alive
+			Integer pid;
+			pid = Util.readPid(instanceName);
+			if (pid != null) {
+				// Is the instance still running?
+				if (Util.isRunning(pid)) {
+					System.out.println("Instance '" + instanceName + "' is running as process " + pid);
+					System.exit(0);
+				} else {
+					System.out.println("Instance '" + instanceName + "' is no longer running (process " + pid + " does not exist)");
+					System.exit(1);
+				}
+			} else {
+				System.out.println("No pid file found for instance '" + instanceName + "'");
+				System.exit(1);
+			}
 		} else {
 			// some other command
 			Integer pid = getPidOfInstance(instanceName);
