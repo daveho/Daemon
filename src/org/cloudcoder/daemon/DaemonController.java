@@ -140,19 +140,7 @@ public abstract class DaemonController {
 		}
 		
 		if (command.equals("start")) {
-			DaemonLauncher launcher = new DaemonLauncher();
-			
-			// If a stdout log file name was provided, use it
-			if (opts.getStdoutLogFileName() != null) {
-				launcher.setStdoutLogFile(opts.getStdoutLogFileName());
-			}
-			
-			// If JVM options were provided, use them
-			if (opts.getJvmOptions() != null) {
-				launcher.setJvmOptions(opts.getJvmOptions());
-			}
-			
-			launcher.launch(instanceName, getDaemonClass());
+			doStart(opts, instanceName);
 		} else if (command.equals("shutdown")) {
 			// shutdown command
 			Integer pid = getPidOfInstance(instanceName);
@@ -168,27 +156,71 @@ public abstract class DaemonController {
 			});
 			Util.cleanup(instanceName, pid);
 		} else if (command.equals("check")) {
-			// check to see if process is alive
-			Integer pid;
-			pid = Util.readPid(instanceName);
-			if (pid != null) {
-				// Is the instance still running?
-				if (Util.isRunning(pid)) {
-					System.out.println("Instance '" + instanceName + "' is running as process " + pid);
-					System.exit(0);
-				} else {
-					System.out.println("Instance '" + instanceName + "' is no longer running (process " + pid + " does not exist)");
-					System.exit(1);
-				}
-			} else {
+			// Check pid file
+			Integer pid = Util.readPid(instanceName);
+			if (pid == null) {
 				System.out.println("No pid file found for instance '" + instanceName + "'");
 				System.exit(1);
+			}
+			
+			// Is the instance still running?
+			if (Util.isRunning(pid)) {
+				System.out.println("Instance '" + instanceName + "' is running as process " + pid);
+				System.exit(0);
+			} else {
+				System.out.println("Instance '" + instanceName + "' is no longer running (process " + pid + " does not exist)");
+				System.exit(1);
+			}
+		} else if (command.equals("poke")) {
+			// poke instance: if it isn't running, restart it
+			boolean needStart = false;
+			boolean needCleanup = false;
+			
+			// Check pid file
+			Integer pid = Util.readPid(instanceName);
+			if (pid == null) {
+				// no pid file
+				needStart = true;
+			} else {
+				// Check whether process is running
+				if (!Util.isRunning(pid)) {
+					needCleanup = true; // remove old pid file and FIFO
+					needStart = true;
+				}
+			}
+			
+			// cleanup files from previous execution if necessary
+			if (needCleanup) {
+				Util.deleteFile(Util.getPidFileName(instanceName));
+				Util.deleteFile(Util.getFifoName(instanceName, pid));
+			}
+			
+			// start if necessary
+			if (needStart) {
+				doStart(opts, instanceName);
 			}
 		} else {
 			// some other command
 			Integer pid = getPidOfInstance(instanceName);
 			Util.sendCommand(instanceName, pid, command);
 		}
+	}
+
+	private void doStart(Options opts, String instanceName)
+			throws DaemonException {
+		DaemonLauncher launcher = new DaemonLauncher();
+		
+		// If a stdout log file name was provided, use it
+		if (opts.getStdoutLogFileName() != null) {
+			launcher.setStdoutLogFile(opts.getStdoutLogFileName());
+		}
+		
+		// If JVM options were provided, use them
+		if (opts.getJvmOptions() != null) {
+			launcher.setJvmOptions(opts.getJvmOptions());
+		}
+		
+		launcher.launch(instanceName, getDaemonClass());
 	}
 
 	/**
