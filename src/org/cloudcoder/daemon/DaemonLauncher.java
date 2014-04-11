@@ -1,4 +1,4 @@
-// Copyright (c) 2012, David H. Hovemeyer <david.hovemeyer@gmail.com>
+// Copyright (c) 2012-2014, David H. Hovemeyer <david.hovemeyer@gmail.com>
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -184,7 +184,19 @@ public class DaemonLauncher {
 		IDaemon daemon = (IDaemon) daemonClass.newInstance();
 		
 		// Start the daemon!
-		daemon.start(instanceName);
+		// Note that exceptions are treated as fatal, and will result
+		// in a message to stdout (which should be captured in the stdout
+		// log) and cleanup of the FIFO and pid file.
+		try {
+			daemon.start(instanceName);
+		} catch (Throwable e) {
+			System.out.println("Exception starting daemon");
+			e.printStackTrace(System.out);
+			System.out.flush();
+			Util.deleteFile(Util.getFifoName(instanceName, pid));
+			Util.deleteFile(Util.getPidFileName(instanceName));
+			System.exit(1);
+		}
 		
 		// Read commands (issued by the DaemonController) from the FIFO
 		String fifoName = Util.getFifoName(instanceName, pid);
