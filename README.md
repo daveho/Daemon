@@ -13,8 +13,8 @@ for example, if you are doing a single-jar deployment, it would be the
 main class.
 
 Running the example daemon: first compile the classes (will happen automatically
-if you import the project into Eclipse).  Then cd to the root directory of
-the project.  Run the following commands:
+if you import the project into Eclipse, or you can run `ant build`).
+Then cd to the root directory of the project.  Run the following commands:
 
 ```
 ./mkdemojar.sh
