@@ -1,7 +1,0 @@
-/daemon*.jar
-/demo.jar
-/log.txt
-/bin
-/copy.sh
-/*.pid
-/*.fifo
