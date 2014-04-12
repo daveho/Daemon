@@ -198,10 +198,11 @@ public class Util {
 	private static boolean doIsRunning(Integer pid) throws IOException {
 		BufferedReader reader = null; 
 		
+		boolean found = false;
 		try {
 			// Note that we need to run ps -e in order to see all processes
 			reader = readProcess(PS_PATH, "-e");
-			while (true) {
+			while (!found) {
 				String line = reader.readLine();
 				if (line == null) {
 					break;
@@ -210,14 +211,14 @@ public class Util {
 				if (m.find()) {
 					Integer otherPid = Integer.parseInt(m.group(1));
 					if (pid.equals(otherPid)) {
-						return true;
+						found = true;
 					}
 				}
 			}
-			return false;
 		} finally {
 			IOUtil.closeQuietly(reader);
 		}
+		return found;
 	}
 
 	/**
