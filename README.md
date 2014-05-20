@@ -8,7 +8,7 @@ subprocesses, specifically `sh`, `ps`, and `mkfifo`.
 The intended use is to make it easy to build deployable jar files
 for server or other long-running applications.  For example, you might
 use this library as part of packaging your Java web application into a single
-jar file (using embedded [Jetty](http://jetty.eclipse.org/)): this library
+jar file (using embedded [Jetty](http://www.eclipse.org/jetty/)): this library
 allows the application to run as a background process, handle runtime
 configuration commands, and to shut itself down cleanly.  Once everything
 is set up you can then do cool things like the following:
