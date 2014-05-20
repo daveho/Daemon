@@ -5,6 +5,23 @@ The library does not use native code, nor does it require external
 shell scripts.  All OS-dependent functionality is implemented by executing
 subprocesses, specifically `sh`, `ps`, and `mkfifo`.
 
+The intended use is to make it easy to build deployable jar files
+for server or other long-running applications.  For example, you might
+use this library to package your Java web application into a single
+jar file (using embedded [Jetty](http://jetty.eclipse.org/)).  You can
+then do cool things like the following:
+
+```bash
+# Start the application in the background
+java -jar myApp.jar start
+
+# Send a command to the running application
+java -jar myApp.jar purgecache
+
+# Shut down the running application
+java -jar myApp.jar shutdown
+```
+
 Detailed information can be found at the [wiki](https://github.com/daveho/Daemon/wiki).
 
 The library is open source distributed under the MIT license.
