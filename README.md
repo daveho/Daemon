@@ -17,7 +17,7 @@ is set up you can then do cool things like the following:
 # Start the application in the background
 java -jar myApp.jar start
 
-# Send a command to the running application
+# Send a command (purgecache) to the running application
 java -jar myApp.jar purgecache
 
 # Shut down the running application
