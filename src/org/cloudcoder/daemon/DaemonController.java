@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2014, David H. Hovemeyer <david.hovemeyer@gmail.com>
+// Copyright (c) 2012-2018, David H. Hovemeyer <david.hovemeyer@gmail.com>
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,10 @@
 // THE SOFTWARE.
 
 package org.cloudcoder.daemon;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * This class is responsible for taking commands issued from
@@ -111,6 +115,44 @@ public abstract class DaemonController {
 		public String getJvmOptions() {
 			return jvmOptions;
 		}
+		
+		/**
+		 * Returns true if the <code>poke</code> command should
+		 * generate output.  The default implementation returns <code>true</code>.
+		 * Subclasses may disable poke output by returning false.
+		 * If output is enabled, the poke command prints detailed information
+		 * about whether or not the process is running or needs to be
+		 * restarted, and if a restart was necessary, whether the restart
+		 * was successful.  This information is very useful to capture in a
+		 * log for diagnostic purposes.
+		 * 
+		 * @return true if poke output should be enabled, false otherwise
+		 */
+		public boolean isPokeOutputEnabled() {
+			return true;
+		}
+		
+		/**
+		 * Print a message about poking an instance.
+		 * Does nothing if poke output is disabled.
+		 * 
+		 * @param instanceName the instance name
+		 * @param msg          the message to print
+		 */
+		public void pokeMessage(String instanceName, String msg) {
+			if (!isPokeOutputEnabled()) {
+				return;
+			}
+			DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			Date now = new Date();
+			StringBuilder buf = new StringBuilder();
+			buf.append(fmt.format(now));
+			buf.append(": Poking instance ");
+			buf.append(instanceName);
+			buf.append(": ");
+			buf.append(msg);
+			System.out.println(buf.toString());
+		}
 	}
 	
 	/**
@@ -181,11 +223,15 @@ public abstract class DaemonController {
 			if (pid == null) {
 				// no pid file
 				needStart = true;
+				opts.pokeMessage(instanceName, "Restarting (no pid file found)");
 			} else {
 				// Check whether process is running
 				if (!Util.isRunning(pid)) {
 					needCleanup = true; // remove old pid file and FIFO
 					needStart = true;
+					opts.pokeMessage(instanceName, "Restarting (process " + pid + " is no longer running)");
+				} else {
+					opts.pokeMessage(instanceName, "No restart is needed (process " + pid + " is still running)");
 				}
 			}
 			
@@ -193,11 +239,34 @@ public abstract class DaemonController {
 			if (needCleanup) {
 				Util.deleteFile(Util.getPidFileName(instanceName));
 				Util.deleteFile(Util.getFifoName(instanceName, pid));
+				opts.pokeMessage(instanceName, "Restart: deleted pid file and FIFO for process " + pid);
 			}
 			
 			// start if necessary
 			if (needStart) {
 				doStart(opts, instanceName);
+				opts.pokeMessage(instanceName, "Restart: started new process");
+				if (opts.isPokeOutputEnabled()) {
+					// Loop for a bit to find out pid of new process
+					Integer newPid = null;
+					for (int count = 0; count < 5; count++) {
+						newPid = Util.readPid(instanceName);
+						if (newPid != null) {
+							break;
+						}
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							opts.pokeMessage(instanceName, "Interrupted waiting for new pid file?");
+							break;
+						}
+					}
+					if (newPid != null) {
+						opts.pokeMessage(instanceName, "New process pid is " + newPid);
+					} else {
+						opts.pokeMessage(instanceName, "Could not determine pid of new process");
+					}
+				}
 			}
 		} else {
 			// some other command

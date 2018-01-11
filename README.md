@@ -18,7 +18,13 @@ is set up you can then do cool things like the following:
 java -jar myApp.jar start
 
 # Send a command (purgecache) to the running application
+# (note that this is just an example: handling non-built-in
+# commands is done by logic in your application)
 java -jar myApp.jar purgecache
+
+# Start (or restart) the application if it is not
+# currently running (or has crashed)
+java -jar myApp.jar poke
 
 # Shut down the running application
 java -jar myApp.jar shutdown
